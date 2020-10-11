@@ -1,10 +1,16 @@
 import React, { useState } from "react";
+import { axiosWithAuth } from "../api/axiosWithAuth";
+import { useHistory } from "react-router-dom";
 
 function Login(props) {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [loginErrorMessage, setLoginErrorMessage] = useState("");
 
   const changeHandler = (e) => {
     e.preventDefault();
@@ -15,9 +21,25 @@ function Login(props) {
     setFormData(newFormData);
   };
 
-  const onSubmit = (e) =>  {
+  const onSubmit = (e) => {
     e.preventDefault();
-  }
+
+    setIsLoading(true);
+
+    axiosWithAuth()
+      .post("/login", formData)
+      .then((res) => {
+        console.log(res);
+        setIsLoading(false);
+        localStorage.setItem("token", res.data.payload);
+        props.history.push("/friends");
+      })
+      .catch((err) => {
+        console.log(err.response);
+        setIsLoading(false);
+        setLoginErrorMessage("Wrong email or password");
+      });
+  };
 
   return (
     <form className="login form" onSubmit={onSubmit}>
@@ -39,7 +61,11 @@ function Login(props) {
           placeholder="Enter your password"
         />
       </label>
-      <button className="btn"> Login </button>
+      <button className="btn" type="submit">
+        {" "}
+        Login{" "}
+      </button>
+      {isLoading ? <p>Login is in progress</p> : <p>{loginErrorMessage}</p>}
     </form>
   );
 }
